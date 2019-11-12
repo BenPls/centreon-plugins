@@ -18,11 +18,11 @@
 # limitations under the License.
 #
 
-package network::cisco::smallbusiness::standard::snmp::plugin;
+package network::paloalto::ssh::plugin;
 
 use strict;
 use warnings;
-use base qw(centreon::plugins::script_snmp);
+use base qw(centreon::plugins::script_custom);
 
 sub new {
     my ($class, %options) = @_;
@@ -31,15 +31,14 @@ sub new {
 
     $self->{version} = '1.0';
     %{$self->{modes}} = (
-        'cpu'                  => 'centreon::common::cisco::smallbusiness::snmp::mode::cpu',
-        'environment'          => 'centreon::common::cisco::smallbusiness::snmp::mode::environment',
-        'interfaces'           => 'snmp_standard::mode::interfaces',
-        'list-interfaces'      => 'snmp_standard::mode::listinterfaces',
-        'list-spanning-trees'  => 'snmp_standard::mode::listspanningtrees',
-        'spanning-tree'        => 'snmp_standard::mode::spanningtree',
-        'uptime'               => 'snmp_standard::mode::uptime',
+        'environment' => 'network::paloalto::ssh::mode::environment',
+        'ha'          => 'network::paloalto::ssh::mode::ha',
+        'interfaces'  => 'network::paloalto::ssh::mode::interfaces',
+        'system'      => 'network::paloalto::ssh::mode::system',
+        'vpn'         => 'network::paloalto::ssh::mode::vpn',
     );
 
+    $self->{custom_modes}{ssh} = 'network::paloalto::ssh::custom::cli';
     return $self;
 }
 
@@ -49,6 +48,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Cisco SB series switches in SNMP.
+Check PaloAlto with cli in ssh.
 
 =cut

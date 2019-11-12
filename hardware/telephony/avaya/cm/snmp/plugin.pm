@@ -18,7 +18,7 @@
 # limitations under the License.
 #
 
-package network::cisco::smallbusiness::standard::snmp::plugin;
+package hardware::telephony::avaya::cm::snmp::plugin;
 
 use strict;
 use warnings;
@@ -31,13 +31,9 @@ sub new {
 
     $self->{version} = '1.0';
     %{$self->{modes}} = (
-        'cpu'                  => 'centreon::common::cisco::smallbusiness::snmp::mode::cpu',
-        'environment'          => 'centreon::common::cisco::smallbusiness::snmp::mode::environment',
-        'interfaces'           => 'snmp_standard::mode::interfaces',
-        'list-interfaces'      => 'snmp_standard::mode::listinterfaces',
-        'list-spanning-trees'  => 'snmp_standard::mode::listspanningtrees',
-        'spanning-tree'        => 'snmp_standard::mode::spanningtree',
-        'uptime'               => 'snmp_standard::mode::uptime',
+        'calls'    => 'hardware::telephony::avaya::cm::snmp::mode::calls',
+        'licenses' => 'hardware::telephony::avaya::cm::snmp::mode::licenses',
+        'trunks'   => 'hardware::telephony::avaya::cm::snmp::mode::trunks',
     );
 
     return $self;
@@ -49,6 +45,6 @@ __END__
 
 =head1 PLUGIN DESCRIPTION
 
-Check Cisco SB series switches in SNMP.
+Check avaya communication manager in SNMP.
 
 =cut
