@@ -26,29 +26,7 @@ use strict;
 use warnings;
 use centreon::plugins::statefile;
 use centreon::plugins::templates::catalog_functions qw(catalog_status_threshold catalog_status_calc);
-
-my %map_gServerStatus = (
-    1 => 'unknown',
-    2 => 'stopped',
-    3 => 'pending',
-    4 => 'running',
-    5 => 'initializing',
-    6 => 'serviceUnavailable',
-    7 => 'suspending',
-    8 => 'suspended'
-);
-
-my %oids_gServerTable = (
-    'gServerName'    => '.1.3.6.1.4.1.1729.100.1.2.1.2',
-    'gServerStatus'  => '.1.3.6.1.4.1.1729.100.1.2.1.3',
-    'gServerType'     => '.1.3.6.1.4.1.1729.100.1.2.1.4',
-);
-
-my %mappings = (
-	gServerName => { oid => $oids_gServerTable{gServerName} },
-	gServerType => { oid => $oids_gServerTable{gServerType} },
-	gServerStatus => { oid => $oids_gServerTable{gServerStatus}, map => \%map_gServerStatus },
-);
+use apps::genesys::snmp::common qw(get_oidtable reload_cache);
 
 sub set_counters {
     my ($self, %options) = @_;
@@ -133,8 +111,16 @@ sub manage_selection {
 
     $self->get_selection(snmp => $options{snmp});
     
+	my $oids_gServerTable = $self->get_oidtable(name => 'gServerTable');
+
+	my %mappings = (
+		gServerName => $oids_gServerTable->{gServerName},
+		gServerType => $oids_gServerTable->{gServerType},
+		gServerStatus => $oids_gServerTable->{gServerStatus},
+	);
+
     $options{snmp}->load(
-        oids => [$oids_gServerTable{gServerName}, $oids_gServerTable{gServerType}, $oids_gServerTable{gServerStatus}], 
+        oids => [$oids_gServerTable->{gServerName}->{oid}, $oids_gServerTable->{gServerType}->{oid}, $oids_gServerTable->{gServerStatus}->{oid}], 
         instances => $self->{gserver_dbid_selected},
         nothing_quit => 1
     );
@@ -150,41 +136,6 @@ sub manage_selection {
 			app_status => $result->{gServerStatus},
 		};
 	}
-}
-
-sub reload_cache {
-    my ($self, %options) = @_;
-    my $data = {};
-
-    $data->{last_timestamp} = time();
-    $data->{all_ids} = [];
-    
-    my $request = [ 
-    	{ oid => $oids_gServerTable{gServerName} },
-    	{ oid => $oids_gServerTable{gServerType} }
-    ];
-    
-    my $result = $options{snmp}->get_multiple_table(oids => $request);
-
-    foreach ((['name', 'gServerName'], ['type', 'gServerType'])) {
-		foreach my $key ($options{snmp}->oid_lex_sort(keys %{$result->{ $oids_gServerTable{$$_[1]} }})) {
-	        next if ($key !~ /\.([0-9]+)$/);        
-	        my $server_index = $1;
-
-            if ($$_[1] =~ /gServerName/i) {
-		        push @{$data->{all_ids}}, $server_index;
-	        }
-	        
-	        $data->{$$_[1] . '_' . $server_index} = $self->{output}->to_utf8($result->{ $oids_gServerTable{$$_[1]} }->{$key});
-	    }
-	}
-
-    if (scalar(@{$data->{all_ids}}) <= 0) {
-        $self->{output}->add_option_msg(short_msg => "Can't construct cache...");
-        $self->{output}->option_exit();
-    }
-
-    $self->{statefile_cache}->write(data => $data);
 }
 
 sub get_selection {
