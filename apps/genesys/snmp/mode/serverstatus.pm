@@ -64,7 +64,7 @@ sub new {
     my ($class, %options) = @_;
     my $self = $class->SUPER::new(package => __PACKAGE__, %options);
     bless $self, $class;
-    
+
     $options{options}->add_options(arguments => {
         'warning:s'             => { name => 'warning', },
         'critical:s'            => { name => 'critical', },
@@ -80,7 +80,7 @@ sub new {
         'reload-cache-time:s'   => { name => 'reload_cache_time', default => 180 },
         'show-cache'            => { name => 'show_cache' },
     });
-   
+
     $self->{gserver_dbid_selected} = [];
     $self->{statefile_cache} = centreon::plugins::statefile->new(%options);
 
@@ -92,35 +92,35 @@ sub check_options {
     $self->SUPER::check_options(%options);
     $self->{statefile_cache}->check_options(%options);
 
-	$self->change_macros(macros => ['unknown_status', 'warning_status', 'critical_status']);
+    $self->change_macros(macros => ['unknown_status', 'warning_status', 'critical_status']);
 
-	$self->{exclude_name} = [];
-	foreach my $val (@{$self->{option_results}->{exclude_name}}) {
-		next if (!defined($val) || $val eq '');
-		push @{$self->{exclude_name}}, $val; 
-	}
-	$self->{exclude_type} = ['Resource Access Point', 'Database Access Point'];
-	foreach my $val (@{$self->{option_results}->{exclude_type}}) {
-		next if (!defined($val) || $val eq '');
-		push @{$self->{exclude_type}}, $val; 
-	}
+    $self->{exclude_name} = [];
+    foreach my $val (@{$self->{option_results}->{exclude_name}}) {
+        next if (!defined($val) || $val eq '');
+        push @{$self->{exclude_name}}, $val;
+    }
+    $self->{exclude_type} = ['Resource Access Point', 'Database Access Point'];
+    foreach my $val (@{$self->{option_results}->{exclude_type}}) {
+        next if (!defined($val) || $val eq '');
+        push @{$self->{exclude_type}}, $val;
+    }
 }
 
 sub manage_selection {
     my ($self, %options) = @_;
 
     $self->get_selection(snmp => $options{snmp});
-    
-	my $oids_gServerTable = $self->get_oidtable(name => 'gServerTable');
 
-	my %mappings = (
-		gServerName => $oids_gServerTable->{gServerName},
-		gServerType => $oids_gServerTable->{gServerType},
-		gServerStatus => $oids_gServerTable->{gServerStatus},
-	);
+    my $oids_gServerTable = $self->get_oidtable(name => 'gServerTable');
+
+    my %mappings = (
+        gServerName => $oids_gServerTable->{gServerName},
+        gServerType => $oids_gServerTable->{gServerType},
+        gServerStatus => $oids_gServerTable->{gServerStatus},
+    );
 
     $options{snmp}->load(
-        oids => [$oids_gServerTable->{gServerName}->{oid}, $oids_gServerTable->{gServerType}->{oid}, $oids_gServerTable->{gServerStatus}->{oid}], 
+        oids => [$oids_gServerTable->{gServerName}->{oid}, $oids_gServerTable->{gServerType}->{oid}, $oids_gServerTable->{gServerStatus}->{oid}],
         instances => $self->{gserver_dbid_selected},
         nothing_quit => 1
     );
@@ -131,11 +131,11 @@ sub manage_selection {
         my $instance = $_;
         my $result = $options{snmp}->map_instance(mapping => \%mappings, results => $snmp_result, instance => $instance);
 
-    	$self->{gservers}->{$result->{gServerName}} = {
-            display => $result->{gServerName}, 
-			app_status => $result->{gServerStatus},
-		};
-	}
+        $self->{gservers}->{$result->{gServerName}} = {
+            display => $result->{gServerName},
+            app_status => $result->{gServerStatus},
+        };
+    }
 }
 
 sub get_selection {
@@ -155,30 +155,30 @@ sub get_selection {
     }
 
     my $all_ids = $self->{statefile_cache}->get(name => 'all_ids');
-	
-	foreach my $i (@{$all_ids}) {
-		my $filters = { name => 1, type => 1 };
-		my $gserver = { name => $self->{statefile_cache}->get(name => 'gServerName' . '_' . $i), type => $self->{statefile_cache}->get(name => 'gServerType' . '_' . $i) };
 
-		foreach my $filter (keys %$filters) {
-			if (defined($self->{option_results}->{'app_' . $filter}) && $self->{option_results}->{'app_' . $filter} ne '') {
-				if (defined($self->{option_results}->{'regexp_' . $filter})) {
-					$filters->{$filter} = $gserver->{$filter} =~ /$self->{option_results}->{'app_' . $filter}/;
-				} else {
-					$filters->{$filter} = $gserver->{$filter} eq $self->{option_results}->{'app_' . $filter};
-				}
-			}
-			foreach my $exclude_filter (@{$self->{'exclude_' . $filter}}) {
-				$filters->{$filter} = $filters->{$filter} && !($gserver->{$filter} =~ /$exclude_filter/);
-			}
-		}
-		if ($filters->{name} && $filters->{type}) {
-			push @{$self->{gserver_dbid_selected}}, $i;
-		} else {
-			$self->{output}->output_add(long_msg => "Skipping application '" . $gserver->{name} . "': no matching filter.", debug => 1);
-		}
-	}
-    
+    foreach my $i (@{$all_ids}) {
+        my $filters = { name => 1, type => 1 };
+        my $gserver = { name => $self->{statefile_cache}->get(name => 'gServerName' . '_' . $i), type => $self->{statefile_cache}->get(name => 'gServerType' . '_' . $i) };
+
+        foreach my $filter (keys %$filters) {
+            if (defined($self->{option_results}->{'app_' . $filter}) && $self->{option_results}->{'app_' . $filter} ne '') {
+                if (defined($self->{option_results}->{'regexp_' . $filter})) {
+                    $filters->{$filter} = $gserver->{$filter} =~ /$self->{option_results}->{'app_' . $filter}/;
+                } else {
+                    $filters->{$filter} = $gserver->{$filter} eq $self->{option_results}->{'app_' . $filter};
+                }
+            }
+            foreach my $exclude_filter (@{$self->{'exclude_' . $filter}}) {
+                $filters->{$filter} = $filters->{$filter} && !($gserver->{$filter} =~ /$exclude_filter/);
+            }
+        }
+        if ($filters->{name} && $filters->{type}) {
+            push @{$self->{gserver_dbid_selected}}, $i;
+        } else {
+            $self->{output}->output_add(long_msg => "Skipping application '" . $gserver->{name} . "': no matching filter.", debug => 1);
+        }
+    }
+
     if (scalar(@{$self->{gserver_dbid_selected}}) <= 0) {
         $self->{output}->add_option_msg(short_msg => "No application found. Can be: filters, cache file.");
         $self->{output}->option_exit();
@@ -201,7 +201,7 @@ Filter application name.
 
 =item B<--regexp-name>
 
-Allows to use regexp to filter application 
+Allows to use regexp to filter application
 name (with option --app-name).
 
 =item B<--exclude-name>
@@ -214,7 +214,7 @@ Filter application type.
 
 =item B<--regexp-type>
 
-Allows to use regexp to filter application 
+Allows to use regexp to filter application
 type (with option --app-type).
 
 =item B<--unknown-status>

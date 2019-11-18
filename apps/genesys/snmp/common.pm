@@ -53,12 +53,12 @@ my %map_gServerStatus = (
 );
 
 my %map_gsCtrlRowStatus = (
-    1 => 'active', 
-    2 => 'notInService', 
-    3 => 'notReady', 
-    4 => 'createAndGo', 
-    5 => 'createAndWait', 
-    6 => 'destroy' 
+    1 => 'active',
+    2 => 'notInService',
+    3 => 'notReady',
+    4 => 'createAndGo',
+    5 => 'createAndWait',
+    6 => 'destroy'
 );
 
 my %map_gsCtrlRefreshStatus = (
@@ -70,21 +70,21 @@ my %map_gsCtrlRefreshStatus = (
 );
 
 my %goids = (
-	gServerTable => {
-		gServerName    => { oid => '.1.3.6.1.4.1.1729.100.1.2.1.2' },
-		gServerStatus  => { oid => '.1.3.6.1.4.1.1729.100.1.2.1.3', map => \%map_gServerStatus },
-		gServerType    => { oid => '.1.3.6.1.4.1.1729.100.1.2.1.4' },
-	},
-	gServerControlTable => {
-		gsCtrlRefreshStatus  => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.3', map => \%map_gsCtrlRefreshStatus },
-		gsCtrlRowStatus      => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.6', map => \%map_gsCtrlRowStatus },
-	},
+    gServerTable => {
+        gServerName    => { oid => '.1.3.6.1.4.1.1729.100.1.2.1.2' },
+        gServerStatus  => { oid => '.1.3.6.1.4.1.1729.100.1.2.1.3', map => \%map_gServerStatus },
+        gServerType    => { oid => '.1.3.6.1.4.1.1729.100.1.2.1.4' },
+    },
+    gServerControlTable => {
+        gsCtrlRefreshStatus  => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.3', map => \%map_gsCtrlRefreshStatus },
+        gsCtrlRowStatus      => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.6', map => \%map_gsCtrlRowStatus },
+    },
 );
 
 sub get_oidtable {
     my ($self, %options) = @_;
-	
-	return $goids{$options{name}};
+
+    return $goids{$options{name}};
 }
 
 sub reload_cache {
@@ -93,14 +93,14 @@ sub reload_cache {
 
     $data->{last_timestamp} = time();
     $data->{all_ids} = [];
-    
-	my $oids_gServerTable = $self->get_oidtable( name => 'gServerTable' );
 
-    my $request = [ 
+    my $oids_gServerTable = $self->get_oidtable( name => 'gServerTable' );
+
+    my $request = [
         { oid => $oids_gServerTable->{gServerName}->{oid} },
         { oid => $oids_gServerTable->{gServerType}->{oid} }
     ];
-    
+
     my $result = $options{snmp}->get_multiple_table(oids => $request);
 
     foreach ((['name', 'gServerName'], ['type', 'gServerType'])) {
@@ -111,7 +111,7 @@ sub reload_cache {
             if ($$_[1] =~ /gServerName/i) {
                 push @{$data->{all_ids}}, $server_index;
             }
-            
+
             $data->{$$_[1] . '_' . $server_index} = $self->{output}->to_utf8($result->{ $oids_gServerTable->{$$_[1]}->{oid} }->{$key});
         }
     }
