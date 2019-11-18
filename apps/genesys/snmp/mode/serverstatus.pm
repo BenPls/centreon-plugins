@@ -79,7 +79,7 @@ sub custom_status_output {
 sub prefix_server_output {
     my ($self, %options) = @_;
 
-    return "Applications '" . $options{instance_value}->{display} . "' ";
+    return "Application '" . $options{instance_value}->{display} . "' ";
 }
 
 sub new {
@@ -88,19 +88,19 @@ sub new {
     bless $self, $class;
     
     $options{options}->add_options(arguments => {
-        "warning:s"             => { name => 'warning', },
-        "critical:s"            => { name => 'critical', },
-        "app-name:s"            => { name => 'app_name' },
-        "regexp-name"           => { name => 'regexp_name' },
-        "exclude-name:s@"       => { name => 'exclude_name' },
-        "app-type:s"            => { name => 'app_type' },
-        "regexp-type"           => { name => 'regexp_type' },
-        "exclude-type:s@"       => { name => 'exclude_type' },
-        "unknown-status:s"      => { name => 'unknown_status', default => '%{app_status} =~ /unknown/i' },
-        "warning-status:s"      => { name => 'warning_status', default => '%{app_status} =~ /serviceUnavailable/i || %{app_status} =~ /initializing/i || %{app_status} =~ /pending/i' },
-        "critical-status:s"     => { name => 'critical_status', default => '%{app_status} =~ /stopped/i || %{app_status} =~ /suspending/i || %{app_status} =~ /suspended/i' },
-        "reload-cache-time:s"   => { name => 'reload_cache_time', default => 180 },
-        "show-cache"            => { name => 'show_cache' },
+        'warning:s'             => { name => 'warning', },
+        'critical:s'            => { name => 'critical', },
+        'app-name:s'            => { name => 'app_name' },
+        'regexp-name'           => { name => 'regexp_name' },
+        'exclude-name:s@'       => { name => 'exclude_name' },
+        'app-type:s'            => { name => 'app_type' },
+        'regexp-type'           => { name => 'regexp_type' },
+        'exclude-type:s@'       => { name => 'exclude_type' },
+        'unknown-status:s'      => { name => 'unknown_status', default => '%{app_status} =~ /unknown/i' },
+        'warning-status:s'      => { name => 'warning_status', default => '%{app_status} =~ /serviceUnavailable/i || %{app_status} =~ /initializing/i || %{app_status} =~ /pending/i' },
+        'critical-status:s'     => { name => 'critical_status', default => '%{app_status} =~ /stopped/i || %{app_status} =~ /suspending/i || %{app_status} =~ /suspended/i' },
+        'reload-cache-time:s'   => { name => 'reload_cache_time', default => 180 },
+        'show-cache'            => { name => 'show_cache' },
     });
    
     $self->{gserver_dbid_selected} = [];
@@ -175,7 +175,7 @@ sub reload_cache {
 		        push @{$data->{all_ids}}, $server_index;
 	        }
 	        
-	        $data->{$$_[1] . "_" . $server_index} = $self->{output}->to_utf8($result->{ $oids_gServerTable{$$_[1]} }->{$key});
+	        $data->{$$_[1] . '_' . $server_index} = $self->{output}->to_utf8($result->{ $oids_gServerTable{$$_[1]} }->{$key});
 	    }
 	}
 
@@ -207,7 +207,7 @@ sub get_selection {
 	
 	foreach my $i (@{$all_ids}) {
 		my $filters = { name => 1, type => 1 };
-		my $gserver = { name => $self->{statefile_cache}->get(name => 'gServerName' . "_" . $i), type => $self->{statefile_cache}->get(name => 'gServerType' . "_" . $i) };
+		my $gserver = { name => $self->{statefile_cache}->get(name => 'gServerName' . '_' . $i), type => $self->{statefile_cache}->get(name => 'gServerType' . '_' . $i) };
 
 		foreach my $filter (keys %$filters) {
 			if (defined($self->{option_results}->{'app_' . $filter}) && $self->{option_results}->{'app_' . $filter} ne '') {
