@@ -287,7 +287,7 @@ Time in minutes before reloading cache file (default: 180).
 
 =item B<--show-cache>
 
-Display cache storage data.
+Display cache application data.
 
 =back
 
