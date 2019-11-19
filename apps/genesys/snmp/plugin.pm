@@ -32,6 +32,7 @@ sub new {
     $self->{version} = '0.1';
     %{$self->{modes}} = (
         'server-status'       => 'apps::genesys::snmp::mode::serverstatus',
+        'connected-clients'   => 'apps::genesys::snmp::mode::connectedclients',
     );
 
     return $self;

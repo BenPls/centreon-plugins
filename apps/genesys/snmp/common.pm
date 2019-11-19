@@ -25,7 +25,7 @@ use warnings;
 use Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw($map_gsCtrlTableID get_oidtable reload_cache);
+our @EXPORT_OK = qw(get_oidtable reload_cache check_controlrow);
 
 my $map_gsCtrlTableID = {
     1 => 'gsLogTable',
@@ -40,6 +40,20 @@ my $map_gsCtrlTableID = {
     10 => 'tsCallInfoTable',
     11 => 'tsLinkStatsTable'
 };
+
+my %map_gsCtrlTableID_rev = (
+    'gsLogTable' => 1,
+    'gsInfoTable' => 2,
+    'gsClientTable' => 3,
+    'gsPollingTable' => 4,
+    'tsInfoTable' => 5,
+    'tsCallTable' => 6,
+    'tsDtaTable' => 7,
+    'tsLinkTable' => 8,
+    'tsCallFilterTable' => 9,
+    'tsCallInfoTable' => 10,
+    'tsLinkStatsTable' => 11
+);
 
 my %map_gServerStatus = (
     1 => 'unknown',
@@ -76,8 +90,10 @@ my %goids = (
         gServerType    => { oid => '.1.3.6.1.4.1.1729.100.1.2.1.4' },
     },
     gServerControlTable => {
-        gsCtrlRefreshStatus  => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.3', map => \%map_gsCtrlRefreshStatus },
-        gsCtrlRowStatus      => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.6', map => \%map_gsCtrlRowStatus },
+        gsCtrlRefreshStatus    => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.3', map => \%map_gsCtrlRefreshStatus },
+        gsCtrlLastRefreshed    => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.4' },
+        gsCtrlRowStatus        => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.6', map => \%map_gsCtrlRowStatus },
+        gsCtrlAutomaticRefresh => { oid => '.1.3.6.1.4.1.1729.100.1.3.1.5' },
     },
 );
 
@@ -122,6 +138,63 @@ sub reload_cache {
     }
 
     $self->{statefile_cache}->write(data => $data);
+}
+
+sub check_controlrow {
+    my ($self, %options) = @_;
+
+    my $results = {};
+    my $instances = [];
+    my $gsCtrlTableID = $map_gsCtrlTableID_rev{$options{table}};
+
+    foreach (@{$options{instances}}) {
+        $results->{$_} = undef;
+        push @$instances, $_ . '.' . $map_gsCtrlTableID_rev{$options{table}};
+    }
+
+    my $oids_gServerControlTable = $self->get_oidtable( name => 'gServerControlTable' );
+    $options{snmp}->load(
+        oids => [$oids_gServerControlTable->{gsCtrlRefreshStatus}->{oid}, $oids_gServerControlTable->{gsCtrlLastRefreshed}->{oid}, $oids_gServerControlTable->{gsCtrlRowStatus}->{oid}],
+        instances => $instances,
+        instance_regexp => '(\d+\.\d+)$',
+    );
+    my $snmp_result = $options{snmp}->get_leef();
+
+    foreach (@{$instances}) {
+        my $index = $_;
+        $index =~ /(\d+)\.(\d+)$/;
+        my $instance = $1;
+        my $result = $options{snmp}->map_instance(mapping => $oids_gServerControlTable, results => $snmp_result, instance => $index);
+
+        if (!defined($result->{gsCtrlRowStatus}) || $result->{gsCtrlRowStatus} eq '') {
+            # Create row
+            $options{snmp}->set(
+                oids => {
+                    $oids_gServerControlTable->{gsCtrlRowStatus}->{oid} . '.' . $index => { value => 4, type => 'INTEGER' },
+                },
+                dont_quit => 1
+            );
+            # Set up auto-refresh
+            $options{snmp}->set(
+                oids => {
+                    $oids_gServerControlTable->{gsCtrlAutomaticRefresh}->{oid} . '.' . $index => { value => 60, type => 'UNSIGNED32' },
+                },
+                dont_quit => 1
+            );
+            $results->{$instance} = {
+                rowstatus => 'notCreated',
+                lastrefresh => -1,
+            };
+        } else {
+            $results->{$instance} = {
+                rowstatus => $result->{gsCtrlRowStatus},
+                refreshstatus => $result->{gsCtrlRefreshStatus},
+                lastrefresh => $result->{gsCtrlLastRefreshed},
+            };
+        }
+    }
+
+    return $results;
 }
 
 1;
